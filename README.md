@@ -4,6 +4,14 @@
 
 Evaluate, analyze, and safely install Claude Code assets (skills, commands, agents, plugins, rules) from GitHub.
 
+### Quick Install (in Claude Code)
+
+Just paste this in Claude Code:
+
+```
+Install Scout from https://github.com/Logan-DoubleB/Cat_is_king — clone the repo, run bash install.sh, then verify with /scout --init
+```
+
 Scout checks compatibility with your current system, detects conflicts, provides backup/rollback, and gives a clear recommendation before installing anything.
 
 ## Features
@@ -42,7 +50,19 @@ If you already have Scout installed:
 ### Prerequisites
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI
-- `python3`, `jq`, `gh` (GitHub CLI)
+- `python3`, `jq`, `git`
+- `gh` (GitHub CLI) — run `gh auth login` after install
+
+```bash
+# macOS
+brew install python3 jq gh git
+
+# Ubuntu/Debian
+sudo apt install python3 jq gh git
+
+# After installing gh:
+gh auth login
+```
 
 ## Usage
 

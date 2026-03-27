@@ -13,7 +13,15 @@ for dir in "$CLAUDE_DIR/skills" "$CLAUDE_DIR/commands" "$CLAUDE_DIR/agents" "$CL
         HASH_INPUT+="$(find "$dir" -name '*.md' -type f 2>/dev/null | sort)"
     fi
 done
-CACHE_HASH="sha256:$(echo "$HASH_INPUT" | shasum -a 256 | cut -d' ' -f1)"
+# Cross-platform SHA256 (macOS: shasum, Linux: sha256sum)
+if command -v shasum >/dev/null 2>&1; then
+    SHA_CMD="shasum -a 256"
+elif command -v sha256sum >/dev/null 2>&1; then
+    SHA_CMD="sha256sum"
+else
+    SHA_CMD="python3 -c 'import hashlib,sys;print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest())'"
+fi
+CACHE_HASH="sha256:$(echo "$HASH_INPUT" | eval $SHA_CMD | cut -d' ' -f1)"
 
 # --- Skills: local + plugin sources, deduplicated ---
 SKILL_NAMES=$(
