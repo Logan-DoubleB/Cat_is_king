@@ -176,10 +176,10 @@ Edit `~/.claude/skills/scout/scout-trusted.json`:
 
 ```json
 {
-    "trusted_orgs": ["anthropics"],
-    "trusted_repos": ["anthropics/claude-code"],
+    "trusted_orgs": ["anthropic"],
+    "trusted_repos": ["anthropic/claude-code"],
     "blocked_repos": [],
-    "auto_trust_after_install": true
+    "auto_trust_after_install": false
 }
 ```
 

@@ -13,15 +13,17 @@ for dir in "$CLAUDE_DIR/skills" "$CLAUDE_DIR/commands" "$CLAUDE_DIR/agents" "$CL
         HASH_INPUT+="$(find "$dir" -name '*.md' -type f 2>/dev/null | sort)"
     fi
 done
-# Cross-platform SHA256 (macOS: shasum, Linux: sha256sum)
-if command -v shasum >/dev/null 2>&1; then
-    SHA_CMD="shasum -a 256"
-elif command -v sha256sum >/dev/null 2>&1; then
-    SHA_CMD="sha256sum"
-else
-    SHA_CMD="python3 -c 'import hashlib,sys;print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest())'"
-fi
-CACHE_HASH="sha256:$(echo "$HASH_INPUT" | eval $SHA_CMD | cut -d' ' -f1)"
+# Cross-platform SHA256 — no eval
+compute_sha256() {
+    if command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 | cut -d' ' -f1
+    elif command -v sha256sum >/dev/null 2>&1; then
+        sha256sum | cut -d' ' -f1
+    else
+        python3 -c 'import hashlib,sys;print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest())'
+    fi
+}
+CACHE_HASH="sha256:$(echo "$HASH_INPUT" | compute_sha256)"
 
 # --- Skills: local + plugin sources, deduplicated ---
 SKILL_NAMES=$(
@@ -86,19 +88,19 @@ RULE_COUNT=$(find "$CLAUDE_DIR/rules" -name "*.md" -type f 2>/dev/null | wc -l |
 # --- Plugins: count from installed_plugins.json ---
 PLUGIN_COUNT=0
 if [ -f "$CLAUDE_DIR/plugins/installed_plugins.json" ]; then
-    PLUGIN_COUNT=$(python3 -c "
-import json
-with open('$CLAUDE_DIR/plugins/installed_plugins.json') as f:
+    export SCOUT_PLUGINS_JSON="$CLAUDE_DIR/plugins/installed_plugins.json"
+    PLUGIN_COUNT=$(python3 - <<'PYEOF'
+import json, os
+with open(os.environ['SCOUT_PLUGINS_JSON']) as f:
     data = json.load(f)
-# v2 format has {version, plugins: {name: [...]}}
 plugins = data.get('plugins', data) if isinstance(data, dict) else data
 if isinstance(plugins, dict):
-    # Skip non-plugin keys like 'version'
     count = sum(1 for k, v in plugins.items() if isinstance(v, list) and len(v) > 0)
     print(count)
 else:
     print(0)
-" 2>/dev/null || echo "0")
+PYEOF
+    ) || PLUGIN_COUNT=0
 fi
 
 # All names combined for collision detection

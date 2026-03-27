@@ -6,6 +6,7 @@ set -euo pipefail
 
 URL="$1"
 WORKDIR=$(mktemp -d /tmp/scout-XXXXXXXXXX)
+trap 'rm -rf "$WORKDIR"' EXIT
 
 # Normalize URL
 URL="${URL%.git}"
@@ -63,3 +64,6 @@ else
     { echo "ERROR: repo clone 실패 — gh auth login 필요할 수 있습니다" >&2; exit 1; }
     echo "$WORKDIR/repo"
 fi
+
+# Success — disable cleanup trap so caller can use the fetched content
+trap - EXIT

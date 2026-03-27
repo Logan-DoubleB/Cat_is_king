@@ -49,9 +49,9 @@ SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 # If running via curl pipe, clone to temp dir first
 if [ ! -f "$SOURCE_DIR/SKILL.md" ]; then
     info "Cloning Cat_is_king..."
-    TMPDIR=$(mktemp -d)
-    git clone --depth 1 https://github.com/Logan-DoubleB/Cat_is_king.git "$TMPDIR/Cat_is_king" 2>/dev/null
-    SOURCE_DIR="$TMPDIR/Cat_is_king"
+    SCOUT_TMPDIR=$(mktemp -d)
+    git clone --depth 1 https://github.com/Logan-DoubleB/Cat_is_king.git "$SCOUT_TMPDIR/Cat_is_king" 2>/dev/null
+    SOURCE_DIR="$SCOUT_TMPDIR/Cat_is_king"
     CLEANUP_TMP=true
 else
     CLEANUP_TMP=false
@@ -103,8 +103,8 @@ bash "$SCRIPT_DIR/scan-system.sh" >/dev/null 2>&1 && \
     warn "  system-map.json 생성 실패 (나중에 /scout --init 실행하세요)"
 
 # Cleanup temp dir if needed
-if [ "$CLEANUP_TMP" = true ] && [ -n "${TMPDIR:-}" ]; then
-    rm -rf "$TMPDIR"
+if [ "$CLEANUP_TMP" = true ] && [ -n "${SCOUT_TMPDIR:-}" ]; then
+    rm -rf "$SCOUT_TMPDIR"
 fi
 
 echo ""
