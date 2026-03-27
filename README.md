@@ -1,5 +1,7 @@
 # Scout -- Universal Asset Installer for Claude Code
 
+[한국어 설명서 (Korean)](./README.ko.md)
+
 Evaluate, analyze, and safely install Claude Code assets (skills, commands, agents, plugins, rules) from GitHub.
 
 Scout checks compatibility with your current system, detects conflicts, provides backup/rollback, and gives a clear recommendation before installing anything.
