@@ -1,0 +1,14 @@
+{
+    "version": "1.0",
+    "updated_at": "2026-03-27",
+    "trusted_orgs": [
+        "anthropics",
+        "anthropic-community"
+    ],
+    "trusted_repos": [
+        "anthropics/claude-code",
+        "anthropics/awesome-claude-code"
+    ],
+    "blocked_repos": [],
+    "auto_trust_after_install": false
+}
