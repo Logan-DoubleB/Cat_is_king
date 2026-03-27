@@ -54,7 +54,8 @@ if [ ! -f "$SOURCE_DIR/SKILL.md" ]; then
     info "Cloning Cat_is_king..."
     SCOUT_TMPDIR=$(mktemp -d)
     trap cleanup EXIT
-    git clone --depth 1 https://github.com/Logan-DoubleB/Cat_is_king.git "$SCOUT_TMPDIR/Cat_is_king" 2>/dev/null
+    git clone --depth 1 https://github.com/Logan-DoubleB/Cat_is_king.git "$SCOUT_TMPDIR/Cat_is_king" 2>/dev/null || \
+        { error "git clone 실패: 네트워크 오류 또는 접근 권한을 확인하세요"; exit 1; }
     SOURCE_DIR="$SCOUT_TMPDIR/Cat_is_king"
 fi
 

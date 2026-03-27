@@ -79,7 +79,7 @@ grep -q "trap.*EXIT" "$REPO_DIR/scripts/fetch-target.sh" && check "fetch-target.
 
 # Python 인라인에 $VAR 직접 삽입 금지 (python3 -c "..." 안에 $가 있으면 위험)
 # 허용 패턴: python3 - <<'PYEOF' (heredoc) 또는 python3 -c '...' (single quote)
-UNSAFE_PY=$(grep -n 'python3 -c "' "$REPO_DIR/scripts/verify-install.sh" "$REPO_DIR/scripts/cache-check.sh" "$REPO_DIR/scripts/rollback.sh" 2>/dev/null | wc -l | tr -d ' ' || true)
+UNSAFE_PY=$(grep -n 'python3 -c "' "$REPO_DIR/scripts/verify-install.sh" "$REPO_DIR/scripts/cache-check.sh" "$REPO_DIR/scripts/rollback.sh" "$REPO_DIR/scripts/scan-system.sh" 2>/dev/null | wc -l | tr -d ' ' || true)
 [ "${UNSAFE_PY:-0}" -eq 0 ] && check "Python 인라인 셸보간 없음" "PASS" || check "Python 인라인 셸보간 발견 (${UNSAFE_PY}건)" "FAIL"
 
 # install.sh EXIT trap 존재

@@ -107,7 +107,7 @@ fi
 ALL_NAMES=$(echo "$SKILL_NAMES $COMMAND_NAMES $AGENT_NAMES" | jq -s 'add | unique')
 
 # --- Hooks: settings.json + hooks.json + standalone hook files ---
-HOOKS_SUMMARY=$(python3 -c "
+HOOKS_SUMMARY=$(python3 - <<'PYEOF'
 import json, os, glob
 
 result = []
@@ -137,7 +137,7 @@ if os.path.isfile(ecc_hooks):
                     cmd = h.get('command', '')[:80]
                     result.append({'event': event, 'matcher': e.get('matcher', '*'), 'command_snippet': cmd, 'source': 'hooks.json'})
 
-# 3. Standalone hook files in ~/.claude/hooks/ (not .json, not .py, not .sh helper scripts)
+# 3. Standalone hook files
 hooks_dir = os.path.join(claude_dir, 'hooks')
 if os.path.isdir(hooks_dir):
     for f in os.listdir(hooks_dir):
@@ -158,10 +158,11 @@ for hooks_file in glob.glob(os.path.join(claude_dir, 'plugins', 'marketplaces', 
                     result.append({'event': event, 'matcher': e.get('matcher', '*'), 'command_snippet': cmd, 'source': f'plugin:{plugin_name}'})
 
 print(json.dumps(result))
-" 2>/dev/null || echo "[]")
+PYEOF
+) || HOOKS_SUMMARY="[]"
 
 # --- MCP servers: deduplicated by server name ---
-MCP_COUNT=$(python3 -c "
+MCP_COUNT=$(python3 - <<'PYEOF'
 import json, os, glob
 seen = set()
 claude_dir = os.path.expanduser('~/.claude')
@@ -182,7 +183,8 @@ for mcp_file in glob.glob(os.path.join(claude_dir, 'plugins', '**', '.mcp.json')
         seen.add(name)
 
 print(len(seen))
-" 2>/dev/null || echo "0")
+PYEOF
+) || MCP_COUNT=0
 
 # Assemble JSON — atomic write via temp file + mv
 TMP_OUT=$(mktemp)
@@ -212,7 +214,8 @@ cat > "$TMP_OUT" <<ENDJSON
 ENDJSON
 
 # Validate JSON before committing
-if python3 -c "import json; json.load(open('$TMP_OUT'))" 2>/dev/null; then
+export SCOUT_TMP_OUT="$TMP_OUT"
+if python3 -c 'import json,os; json.load(open(os.environ["SCOUT_TMP_OUT"]))' 2>/dev/null; then
     mv "$TMP_OUT" "$OUTPUT"
     trap - EXIT
 else

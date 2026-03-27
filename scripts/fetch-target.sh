@@ -66,4 +66,5 @@ else
 fi
 
 # Success — disable cleanup trap so caller can use the fetched content
+# Note: caller is responsible for cleaning up WORKDIR after use
 trap - EXIT

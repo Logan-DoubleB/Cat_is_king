@@ -173,16 +173,28 @@ RECOMMEND: PARTIAL (2/4 설치 추천)
 3. **File write conflict test**: `cp -rn` (no-clobber) to detect overwrites
 4. **Dependency satisfaction test**: check referenced skill existence
 
-### 2.5 Await user decision
+### 2.5 `--dry-run` check
+
+If `--dry-run` flag is set:
+- Output the report from Phase 1-2
+- Clean up fetched temp directory (`rm -rf $WORKDIR`)
+- Release lock, exit — **do NOT proceed to Phase 3**
+
+### 2.6 Await user decision
 
 > "설치하시겠습니까? [YES / NO]"
 
 YES → Phase 3
-NO → release lock, exit
+NO → clean up fetched temp directory, release lock, exit
 
 ---
 
 ## Phase 3: INSTALL -- Install + verify (CLI mode only)
+
+After Phase 3 completes (success or rollback), clean up the fetched temp directory:
+```bash
+rm -rf "$WORKDIR"  # /tmp/scout-XXXXXXXXXX created by fetch-target.sh
+```
 
 ### 3.1 Create backup
 
