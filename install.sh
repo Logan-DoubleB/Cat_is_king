@@ -4,6 +4,9 @@
 #   or:  git clone https://github.com/Logan-DoubleB/Cat_is_king.git && cd Cat_is_king && bash install.sh
 set -euo pipefail
 
+# Cleanup temp dir on exit (set after SCOUT_TMPDIR is created)
+cleanup() { [ -n "${SCOUT_TMPDIR:-}" ] && rm -rf "$SCOUT_TMPDIR"; }
+
 CLAUDE_DIR="$HOME/.claude"
 SKILL_DIR="$CLAUDE_DIR/skills/scout"
 CMD_DIR="$CLAUDE_DIR/commands"
@@ -50,11 +53,9 @@ SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 if [ ! -f "$SOURCE_DIR/SKILL.md" ]; then
     info "Cloning Cat_is_king..."
     SCOUT_TMPDIR=$(mktemp -d)
+    trap cleanup EXIT
     git clone --depth 1 https://github.com/Logan-DoubleB/Cat_is_king.git "$SCOUT_TMPDIR/Cat_is_king" 2>/dev/null
     SOURCE_DIR="$SCOUT_TMPDIR/Cat_is_king"
-    CLEANUP_TMP=true
-else
-    CLEANUP_TMP=false
 fi
 
 # Check for existing installation
@@ -102,10 +103,7 @@ bash "$SCRIPT_DIR/scan-system.sh" >/dev/null 2>&1 && \
     info "  system-map.json 생성 완료" || \
     warn "  system-map.json 생성 실패 (나중에 /scout --init 실행하세요)"
 
-# Cleanup temp dir if needed
-if [ "$CLEANUP_TMP" = true ] && [ -n "${SCOUT_TMPDIR:-}" ]; then
-    rm -rf "$SCOUT_TMPDIR"
-fi
+# Cleanup is handled by EXIT trap if SCOUT_TMPDIR was set
 
 echo ""
 info "설치 완료!"

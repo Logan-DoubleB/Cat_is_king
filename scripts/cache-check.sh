@@ -11,12 +11,14 @@ if [ ! -f "$MAP" ]; then
     exit 0
 fi
 
-# Extract stored hash
-STORED_HASH=$(python3 -c "
-import json
-with open('$MAP') as f:
+# Extract stored hash (env var, no shell interpolation into Python)
+export SCOUT_MAP="$MAP"
+STORED_HASH=$(python3 - <<'PYEOF'
+import json, os
+with open(os.environ['SCOUT_MAP']) as f:
     print(json.load(f).get('cache_hash', 'none'))
-" 2>/dev/null || echo "none")
+PYEOF
+) || STORED_HASH="none"
 
 # Recompute hash from file list (names only, same algorithm as scan-system.sh)
 HASH_INPUT=""

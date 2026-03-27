@@ -174,8 +174,8 @@ system-map.json 기반으로 6가지 자동 검사를 실행합니다:
 
 ```json
 {
-    "trusted_orgs": ["anthropics"],
-    "trusted_repos": ["anthropics/claude-code"],
+    "trusted_orgs": ["anthropic"],
+    "trusted_repos": ["anthropic/claude-code"],
     "blocked_repos": [],
     "auto_trust_after_install": false
 }

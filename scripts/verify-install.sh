@@ -81,21 +81,20 @@ case "$ASSET_TYPE" in
         ;;
 esac
 
-# 3. System-map integration check
+# 3. System-map integration check (env var, no shell interpolation into Python)
 MAP="$CLAUDE_DIR/skills/scout/system-map.json"
 if [ -f "$MAP" ]; then
-    # Re-scan and check if new asset appears
     bash "$CLAUDE_DIR/skills/scout/scripts/scan-system.sh" > /dev/null 2>&1
-    if python3 -c "
-import json
-with open('$MAP') as f:
+    export SCOUT_MAP="$MAP"
+    export SCOUT_ASSET_NAME="$ASSET_NAME"
+    if python3 - <<'PYEOF'
+import json, os, sys
+with open(os.environ['SCOUT_MAP']) as f:
     data = json.load(f)
 names = data.get('name_registry', {}).get('all_names', [])
-if '$ASSET_NAME' in names:
-    exit(0)
-else:
-    exit(1)
-" 2>/dev/null; then
+sys.exit(0 if os.environ['SCOUT_ASSET_NAME'] in names else 1)
+PYEOF
+    then
         check "시스템맵 등록 확인" "PASS"
     else
         check "시스템맵 등록 확인" "FAIL"
@@ -105,18 +104,19 @@ else
 fi
 
 # 4. Rollback capability check
-LATEST_BACKUP=$(ls -td "$HOME/.claude/backups/scout"/*/ 2>/dev/null | head -1)
+LATEST_BACKUP=$(ls -td "$HOME/.claude/backups/scout"/*/ 2>/dev/null | head -1 || true)
 if [ -n "$LATEST_BACKUP" ] && [ -f "$LATEST_BACKUP/manifest.json" ]; then
     check "롤백 가능 확인" "PASS"
 else
     check "롤백 가능 확인" "FAIL"
 fi
 
-# 5. Hook conflict check
+# 5. Hook conflict check (env var, no shell interpolation into Python)
 if [ -f "$CLAUDE_DIR/settings.json" ]; then
-    HOOK_DUPES=$(python3 -c "
-import json
-with open('$CLAUDE_DIR/settings.json') as f:
+    export SCOUT_SETTINGS="$CLAUDE_DIR/settings.json"
+    HOOK_DUPES=$(python3 - <<'PYEOF'
+import json, os
+with open(os.environ['SCOUT_SETTINGS']) as f:
     data = json.load(f)
 hooks = data.get('hooks', {})
 seen = set()
@@ -124,12 +124,13 @@ dupes = 0
 for event, entries in hooks.items():
     if isinstance(entries, list):
         for e in entries:
-            key = f\"{event}:{e.get('matcher', '*')}\"
+            key = f"{event}:{e.get('matcher', '*')}"
             if key in seen:
                 dupes += 1
             seen.add(key)
 print(dupes)
-" 2>/dev/null || echo "0")
+PYEOF
+    ) || HOOK_DUPES=0
 
     if [ "$HOOK_DUPES" -eq 0 ]; then
         check "훅 충돌 없음" "PASS"

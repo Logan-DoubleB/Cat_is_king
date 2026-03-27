@@ -184,8 +184,11 @@ for mcp_file in glob.glob(os.path.join(claude_dir, 'plugins', '**', '.mcp.json')
 print(len(seen))
 " 2>/dev/null || echo "0")
 
-# Assemble JSON
-cat > "$OUTPUT" <<ENDJSON
+# Assemble JSON — atomic write via temp file + mv
+TMP_OUT=$(mktemp)
+trap 'rm -f "$TMP_OUT"' EXIT
+
+cat > "$TMP_OUT" <<ENDJSON
 {
     "version": "1.0.0",
     "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
@@ -207,5 +210,15 @@ cat > "$OUTPUT" <<ENDJSON
     "hooks": $HOOKS_SUMMARY
 }
 ENDJSON
+
+# Validate JSON before committing
+if python3 -c "import json; json.load(open('$TMP_OUT'))" 2>/dev/null; then
+    mv "$TMP_OUT" "$OUTPUT"
+    trap - EXIT
+else
+    echo "ERROR: 생성된 JSON이 유효하지 않습니다" >&2
+    rm -f "$TMP_OUT"
+    exit 1
+fi
 
 echo "$OUTPUT"

@@ -77,6 +77,17 @@ grep -q "ALLOWED_PREFIX" "$REPO_DIR/scripts/rollback.sh" && check "rollback 경�
 # fetch-target.sh trap 존재
 grep -q "trap.*EXIT" "$REPO_DIR/scripts/fetch-target.sh" && check "fetch-target.sh temp 정리 trap" "PASS" || check "fetch-target.sh temp 정리 trap" "FAIL"
 
+# Python 인라인에 $VAR 직접 삽입 금지 (python3 -c "..." 안에 $가 있으면 위험)
+# 허용 패턴: python3 - <<'PYEOF' (heredoc) 또는 python3 -c '...' (single quote)
+UNSAFE_PY=$(grep -n 'python3 -c "' "$REPO_DIR/scripts/verify-install.sh" "$REPO_DIR/scripts/cache-check.sh" "$REPO_DIR/scripts/rollback.sh" 2>/dev/null | wc -l | tr -d ' ' || true)
+[ "${UNSAFE_PY:-0}" -eq 0 ] && check "Python 인라인 셸보간 없음" "PASS" || check "Python 인라인 셸보간 발견 (${UNSAFE_PY}건)" "FAIL"
+
+# install.sh EXIT trap 존재
+grep -q "trap.*EXIT\|trap cleanup" "$REPO_DIR/install.sh" && check "install.sh EXIT trap" "PASS" || check "install.sh EXIT trap 누락" "FAIL"
+
+# scan-system.sh atomic write (mv 패턴)
+grep -q 'mv.*OUTPUT' "$REPO_DIR/scripts/scan-system.sh" && check "scan-system.sh atomic write" "PASS" || check "scan-system.sh atomic write 없음" "FAIL"
+
 # ── 6. 크로스플랫폼 호환성 ──
 echo ""
 echo "[6] 크로스플랫폼"
@@ -101,6 +112,12 @@ grep -q '"auto_trust_after_install": false' "$REPO_DIR/scout-trusted.json" && ch
 echo ""
 echo "[8] README 일관성"
 grep -q "auto_trust_after_install.*false" "$REPO_DIR/README.md" && check "README.md auto_trust=false" "PASS" || check "README.md auto_trust 불일치" "FAIL"
+# README.ko.md anthropics 오타 검사
+if grep -q '"anthropics"' "$REPO_DIR/README.ko.md" 2>/dev/null; then
+    check "README.ko.md anthropics 오타" "FAIL"
+else
+    check "README.ko.md anthropic 정상" "PASS"
+fi
 grep -q 'README.ko.md' "$REPO_DIR/README.md" && check "한국어 README 링크" "PASS" || check "한국어 README 링크 누락" "FAIL"
 
 # ── 9. install.sh TMPDIR 충돌 없음 ──
